@@ -11,11 +11,12 @@ def not_colliding(i, j):
     return abs(a[0] - b[0]) == abs(a[1] - b[1])
   return not(i[0] == j[0] or i[1] == j[1] or diagonal(i, j))
 
-board['constraints'] = [(i, j, not_colliding) for i in range(SIZE) for j in range(i + 1, SIZE)]
+board['constraints'] = [(i, j, not_colliding) for i in range(SIZE) for j in range(SIZE) if i != j]
 
 result = csp.solve(board)
 status = 'SUCCESS'
-if not all((not_colliding(result[i], result[j]) for i in range(SIZE) for j in range(i + 1, SIZE))):
+if result == 'FAILURE' or not all((not_colliding(result[i], result[j]) for i in range(SIZE) 
+                                      for j in range(i + 1, SIZE))):
   status = 'FAILURE'
 
 print '\n***************'
