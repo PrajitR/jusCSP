@@ -1,6 +1,9 @@
-var FAILURE = 'FAILURE';
+!function() {
 
-function solve(csp, cb) {
+var csp = {},
+    FAILURE = 'FAILURE';
+
+csp.solve = function solve(csp, cb) {
   var result = backtrack({}, csp.variables, csp, cb);
   if (result == FAILURE) { return result; }
   for (var key in result) {
@@ -24,7 +27,7 @@ function backtrack(assigned, unassigned, csp, cb) {
       if (assigned[key]) { newAssigned[key] = consistent[key]; }
       else { newUnassigned[key] = consistent[key]; }
     }
-    cb(newAssigned, newUnassigned, csp);
+    if (cb) { cb(newAssigned, newUnassigned, csp); }
     var result = backtrack(newAssigned, newUnassigned, csp, cb);
     if (result != FAILURE) { return result; }
   }
@@ -53,33 +56,28 @@ function partialAssignment(assigned, unassigned) {
 function enforceConsistency(assigned, unassigned, csp) {
 
   function removeInconsistentValues(head, tail, constraint, variables) {
-    var validTailValues = [], hv = variables[head], tv = variables[tail];
-    for (var i = 0, t = tv[i]; i < tv.length; i++) {
-      for (var j = 0, h = hv[j]; j < hv.length; j++) {
-        if (constraint(h, t)) {
-          validTailValues.push(t);
-          continue;
-        }
-      }
-    }
+    var hv = variables[head], tv = variables[tail];
+    var validTailValues = tv.filter(function (t) {
+      return hv.some(function (h) {
+        return constraint(h, t);
+      });
+    });
     var removed = tv.length != validTailValues.length;
     variables[tail] = validTailValues;
     return removed;
   }
 
   function incomingConstraints(node) {
-    var validConstraints = [];
-    csp.constraints.forEach(function (c) {
-      if (c[0] == node) { validConstraints.push(c); }
+    return csp.constraints.filter(function (c) {
+      return c[0] == node;
     });
-    return validConstraints;
   }
   
   var queue = csp.constraints.slice(), 
       variables = partialAssignment(assigned, unassigned);
   while (queue.length) {
     var c = queue.shift(), head = c[0], tail = c[1], constraint = c[2];
-    if removeInconsistentValues(head, tail, constraint, variables) {
+    if (removeInconsistentValues(head, tail, constraint, variables)) {
       queue = queue.concat(incomingConstraints(tail));
     }
   }
@@ -89,7 +87,7 @@ function enforceConsistency(assigned, unassigned, csp) {
 function selectUnassignedVariable(unassigned) {
   var minKey = null, minLength = Number.POSITIVE_INFINITY;
   for (var key in unassigned) {
-    var len = unassigned[key];
+    var len = unassigned[key].length;
     if (len < minLength) { minKey = key, minLength = len; }
   }
   return minKey;
@@ -99,9 +97,7 @@ function orderValues(nextKey, assigned, unassigned, csp) {
   
   function countValues(vars) {
     var sum = 0;
-    for (var key in unassigned) {
-      sum += unassigned[key].length;
-    }
+    for (var key in vars) { sum += vars[key].length; }
     return sum;
   }
 
@@ -120,3 +116,14 @@ function orderValues(nextKey, assigned, unassigned, csp) {
   values.sort(function (a, b) { return cache[b] - cache[a]; });
   return values;
 }
+
+// Taken from d3 source.
+if (typeof define === 'function' && define.amd) {
+  define(csp);
+} else if (typeof module === 'object' && module.exports) {
+  module.exports = csp;
+} else {
+  this.csp = csp;
+}
+
+}();
