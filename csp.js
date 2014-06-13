@@ -1,16 +1,21 @@
 !function() {
 
-var csp = {},
-    FAILURE = 'FAILURE';
+var CSP = {},
+    FAILURE = 'FAILURE',
+    stepCounter = 0;
 
-csp.solve = function solve(csp, cb) {
+CSP.solve = function solve(csp) {
   // Solves a constraint satisfaction problem.
   // `csp` is an object that should have the properties:
   //    `variables`  : object that holds variable names and their domain.
   //    `constraints`: list of constraints where each element is an 
   //                   array of [head node, tail node, constraint function]
+  //    `cb`: callback function for visualizing assignments. It is passed in
+  //          an "assigned" object, an "unassigned" object, and `csp`.
+  //    `timeStep`: milliseconds between invocations of `cb`.
 
-  var result = backtrack({}, csp.variables, csp, cb);
+  csp.timeStep = csp.timeStep || 1;
+  var result = backtrack({}, csp.variables, csp);
   if (result == FAILURE) { return result; }
   // Unwrap values from array containers.
   for (var key in result) {
@@ -19,24 +24,41 @@ csp.solve = function solve(csp, cb) {
   return result;
 }
 
-function backtrack(assigned, unassigned, csp, cb) {
+function backtrack(_assigned, unassigned, csp) {
   // Backtracking search.
+  
+  // Copying assigned in necessary because we modify it. Without copying
+  // the object over, modifying assigned would also change values for old
+  // assigned objects (which are used in callbacks).
+  var assigned = {};
+  for (var key in _assigned) { assigned[key] = _assigned[key]; }
+
   if (finished(unassigned)) { return assigned; } // Base case.
   var nextKey = selectUnassignedVariable(unassigned),
       values = orderValues(nextKey, assigned, unassigned, csp);
   delete unassigned[nextKey];
 
   for (var i = 0; i < values.length; i++) {
+    stepCounter++;
     assigned[nextKey] = [values[i]]; // Assign a value to a variable.
     var consistent = enforceConsistency(assigned, unassigned, csp);
     var newUnassigned = {}, newAssigned = {};
     for (var key in consistent) {
-      if (assigned[key]) { newAssigned[key] = consistent[key].slice(); }
+      if (assigned[key]) { newAssigned[key] = assigned[key].slice(); }
       else { newUnassigned[key] = consistent[key].slice(); }
     }
-    if (cb) { cb(newAssigned, newUnassigned, csp); }
+    if (csp.cb) {
+      setTimeout(
+          // Need a closure to fix values of newAssigned and newUnassigned.
+          // Otherwise, _every_ call of the callback takes the on values of the last iteration.
+          (function (newAssigned, newUnassigned) {
+             return function () { csp.cb(newAssigned, newUnassigned, csp); };
+          })(newAssigned, newUnassigned),
+          stepCounter * csp.timeStep
+        );
+    }
     if (anyEmpty(consistent)) { continue; } // Empty domains means failure.
-    var result = backtrack(newAssigned, newUnassigned, csp, cb);
+    var result = backtrack(newAssigned, newUnassigned, csp);
     if (result != FAILURE) { return result; }
   }
 
@@ -149,11 +171,11 @@ function orderValues(nextKey, assigned, unassigned, csp) {
 
 // Taken from d3 source. Makes `csp` usable in other scripts.
 if (typeof define === 'function' && define.amd) {
-  define(csp);
+  define(CSP);
 } else if (typeof module === 'object' && module.exports) {
-  module.exports = csp;
+  module.exports = CSP;
 } else {
-  this.csp = csp;
+  this.csp = CSP;
 }
 
 }();
