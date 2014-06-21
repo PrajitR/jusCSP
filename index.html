@@ -1,0 +1,243 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>csp.js by PrajitR</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1 class="header">csp.js</h1>
+        <p class="header">Visualize solving constraint satisfaction problems.</p>
+
+        <ul>
+          <li class="download"><a class="buttons" href="https://github.com/PrajitR/cspjs/zipball/master">Download ZIP</a></li>
+          <li class="download"><a class="buttons" href="https://github.com/PrajitR/cspjs/tarball/master">Download TAR</a></li>
+          <li><a class="buttons github" href="https://github.com/PrajitR/cspjs">View On GitHub</a></li>
+        </ul>
+
+        <p class="header">This project is maintained by <a class="header name" href="https://github.com/PrajitR">PrajitR</a></p>
+
+
+      </header>
+      <section>
+      <button id="nqueens-button">Start NQueens</button>
+      <br/>
+      <span id="nqueens" style="font-family: Consolas, monospace;"></span>
+
+      <br/>
+      <button id="sudoku-button">Solve Sudoku</button>
+      <br/>
+      <span id="sudoku-start" style="float: left; font-family: Consolas, monospace;"></span>
+      <span id="sudoku" style="float: left; font-family: Consolas, monospace;"></span>
+
+      <br/>
+      <object id="us-map" data="us_map.svg" type="image/svg+xml">
+      </object>
+      <script src="csp.js"></script>
+      <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+      <script>
+      (function() {
+      function solve_nqueens() {
+        var SIZE = 8, board = {}, variables = {}, constraints = [];
+
+        function not_colliding(i, j) {
+          function diagonal(a, b) {
+            return Math.abs(a[0] - b[0]) == Math.abs(a[1] - b[1]);
+          }
+          return !(i[0] == j[0] || i[1] == j[1] || diagonal(i, j));
+        }
+
+        for (var i = 0; i < SIZE; i++) {
+          var queenPos = [];
+          for (var j = 0; j < SIZE; j++) {
+            queenPos.push([i, j]);
+            if (i != j) { constraints.push([i, j, not_colliding]); }
+          }
+          variables[i] = queenPos;
+        }
+        board.variables = variables;
+        board.constraints = constraints;
+
+        var node = document.getElementById('nqueens');
+        function visualize(assigned) {
+          var text = '', divider = '';
+          for (var i = 0; i < SIZE * 6 + 1; i++) { divider += '-'; }
+          text += divider + '<br/>'
+          for (var i = 0; i < SIZE; i++) {
+            for (var j = 0; j < SIZE; j++) {
+              text += '|';
+              var mid = assigned[j] && assigned[j][0][1] == i ? j : '&nbsp; ';
+              text += '&nbsp; ' + mid + ' &nbsp;';
+            }
+            text += '|<br/>' + divider + '<br/>'
+          }
+          node.innerHTML = text;
+        }
+        board.cb = visualize;
+        board.timeStep = 500;
+
+        visualize({});
+        csp.solve(board);
+      }
+      document.getElementById('nqueens-button').onclick = solve_nqueens;
+      })();
+      </script>
+
+      <script>
+      (function () {
+      function generate_sudoku() {
+        var starting_nums = [1, 4, 7, 2, 5, 8, 3, 6, 9],
+            SIZE = 9, BLOCK = Math.sqrt(SIZE) | 0,
+            board = [];
+        for (var i = 0; i < SIZE; i++) {
+          var row = [], starting = starting_nums[i];
+          for (var j = 0; j < SIZE; j++) {
+            row.push(starting++);
+            if (starting == SIZE + 1) { starting = 1; }
+          }
+          board.push(row);
+        }
+
+        function transpose(array) {
+          return array[0].map(function(_, i) {
+            return array.map(function(row) {
+              return row[i];
+            });
+          });
+        }
+        function swapRows(array) {
+          var row1 = (Math.random() * SIZE) | 0,
+              blockInd = row1 / BLOCK | 0, // Which block row1 is in.
+              row2 = row1;
+          while (row2 == row1) { row2 = BLOCK * blockInd + ((Math.random() * BLOCK) | 0); }
+          var r1 = array[row1].slice(), r2 = array[row2].slice();
+          array[row1] = r2; array[row2] = r1;
+          return array;
+        }
+        function swapRowBlocks(array) {
+          var b1 = (Math.random() * BLOCK) | 0, b2 = b1;
+          while (b2 == b1) { b2 = (Math.random() * BLOCK) | 0; }
+          for (var i = 0; i < BLOCK; i++) {
+            var row1 = b1 * BLOCK + i, row2 = b2 * BLOCK + i,
+                r1 = array[row1].slice(), r2 = array[row2].slice();
+            array[row1] = r2; array[row2] = r1;
+          }
+        }
+
+        var ITERS = 500;
+        for (var i = 0; i < ITERS; i++) {
+          switch (i % 4) {
+            case 0: // Row swap.
+              swapRows(board);
+              break;
+            case 1: // Col swap.
+              board = transpose(swapRows(transpose(board)));
+              break;
+            case 2:
+              swapRowBlocks(board);
+              break;
+            case 3: // Transpose
+              board = transpose(board);
+              break;
+          }
+        }
+
+        var selected = {}, num_selected = 30;
+        for (var ind = 0; ind < num_selected; ind++) {
+          var i = (Math.random() * SIZE) | 0, j = (Math.random() * SIZE) | 0;
+          if (selected[[i + 1,j + 1]]) { ind--; }
+          selected[[i + 1,j + 1]] = board[i][j];
+        }
+        return selected;
+     }
+
+      function solve_sudoku() {
+         var SIZE = 9, BLOCK_SIZE = Math.sqrt(SIZE) | 0, domain = [],
+             sudoku = {}, variables = {}, constraints = [],
+             filled_in = generate_sudoku();
+
+         for (var i = 1; i <= SIZE; i++) { domain.push(i); }
+         function neq(x, y) { return x != y; }
+
+         for (var i = 1; i <= SIZE; i++) {
+           for (var j = 1; j <= SIZE; j++) {
+             var fi = filled_in[[i,j]];
+             variables[[i, j]] = fi ? [fi] : domain.slice();
+
+             // Vertical and horizontal constraints.
+             for (var k = 1; k <= SIZE; k++) {
+               if (neq(i, j)) {
+                 constraints.push([[i, k], [j, k], neq]);
+                 constraints.push([[k, i], [k, j], neq]);
+               }
+             }
+             // Block constraints.
+             var v = (i - 1) / BLOCK_SIZE | 0, h = (j - 1) / BLOCK_SIZE | 0;
+             for (var k = v * 3; k < (v + 1) * BLOCK_SIZE; k++) {
+               for (var m = h * 3; m < (h + 1) * BLOCK_SIZE; m++) {
+                 if (neq(i, k + 1) || neq(j, m + 1)) {
+                   constraints.push([[k + 1, m + 1], [i, j], neq]);
+                 }
+               }
+             }
+           }
+         }
+         // Braces hell. Sorry.
+
+         sudoku.variables = variables;
+         sudoku.constraints = constraints;
+
+         var node = document.getElementById('sudoku');
+         function visualize(assigned) {
+           var text = '', divider = '';
+           for (var i = 0; i <= SIZE * 4 - 1; i++) { divider += '-'; }
+           text += divider + '</br>';
+           for (var i = 1; i <= SIZE; i++) {
+             var row = '|';
+             for (var j = 1; j <= SIZE; j++) {
+               row += assigned[[i, j]] || '&nbsp; ';
+               row += j % BLOCK_SIZE != 0 ? ' &nbsp; ' : ' | '; // block boundaries.
+             }
+             text += row + '</br>';
+             if (i % BLOCK_SIZE == 0) { text += divider + '<br/>'; }
+           }
+           node.innerHTML = text;
+           return text;
+         }
+
+         sudoku.cb = visualize;
+         sudoku.timeStep = 500;
+
+         document.getElementById('sudoku-start').innerHTML = visualize(filled_in);
+         visualize({});
+         var result = csp.solve(sudoku);
+         if (result == 'FAILURE') { console.log(result); }
+       }
+       
+       document.getElementById('sudoku-button').onclick =  solve_sudoku;//function () {visualize(generate_sudoku());}//solve_sudoku;
+      })();
+      </script>
+
+      <script>
+        console.log($("#us-map").contents().find("#NY"));
+      </script>
+
+      </section>
+      <footer>
+        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+		
+  </body>
+</html>
