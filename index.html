@@ -140,7 +140,7 @@
         board.variables = variables;
         board.constraints = constraints;
 
-        var node = document.getElementById('nqueens');
+        var node = $('#nqueens');
         function visualize(assigned) {
           var text = '', divider = '';
           for (var i = 0; i < SIZE * 6 + 1; i++) { divider += '-'; }
@@ -153,7 +153,7 @@
             }
             text += '|<br/>' + divider + '<br/>'
           }
-          node.innerHTML = text;
+          node.html(text);
         }
         board.cb = visualize;
         board.timeStep = 500;
@@ -161,7 +161,7 @@
         visualize({});
         csp.solve(board);
       }
-      document.getElementById('nqueens-button').onclick = solve_nqueens;
+      $('#nqueens-button').click(solve_nqueens);
       })();
       </script>
 
@@ -269,7 +269,7 @@
          sudoku.variables = variables;
          sudoku.constraints = constraints;
 
-         var node = document.getElementById('sudoku');
+         var node = $('#sudoku');
          function visualize(assigned) {
            var text = '', divider = '';
            for (var i = 0; i <= SIZE * 4 - 1; i++) { divider += '-'; }
@@ -283,20 +283,20 @@
              text += row + '</br>';
              if (i % BLOCK_SIZE == 0) { text += divider + '<br/>'; }
            }
-           node.innerHTML = text;
+           node.html(text);
            return text;
          }
 
          sudoku.cb = visualize;
          sudoku.timeStep = 500;
 
-         document.getElementById('sudoku-start').innerHTML = visualize(filled_in);
+         $('#sudoku-start').html(visualize(filled_in));
          visualize({});
          var result = csp.solve(sudoku);
          if (result == 'FAILURE') { console.log(result); }
        }
        
-       document.getElementById('sudoku-button').onclick =  solve_sudoku;
+       $('#sudoku-button').click(solve_sudoku);
       })();
       </script>
 
