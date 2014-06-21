@@ -105,7 +105,7 @@
       <script src="csp.js"></script>
       <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 
-      <button id="nqueens-button">Start NQueens</button>
+      <button id="nqueens-button">Solve NQueens of size 12</button>
       <br/>
       <span id="nqueens" style="font-family: Consolas, monospace;"></span>
 
@@ -120,7 +120,7 @@
       <script>
       (function() {
       function solve_nqueens() {
-        var SIZE = 8, board = {}, variables = {}, constraints = [];
+        var SIZE = 12, board = {}, variables = {}, constraints = [];
 
         function not_colliding(i, j) {
           function diagonal(a, b) {
@@ -236,7 +236,17 @@
       function solve_sudoku() {
          var SIZE = 9, BLOCK_SIZE = Math.sqrt(SIZE) | 0, domain = [],
              sudoku = {}, variables = {}, constraints = [],
-             filled_in = generate_sudoku();
+             filled_in = {}; //generate_sudoku();
+         var evil = [ [[1, 1], 6], [[1, 5], 2], [[1, 6], 5], [[1, 7], 8],
+                      [[2, 5], 7], [[3, 1], 8], [[3, 3], 4], [[3, 9], 9],
+                      [[4, 1], 4], [[4, 3], 7], [[4, 4], 3], [[4, 8], 2],
+                      [[5, 2], 1], [[5, 8], 9], [[6, 2], 8], [[6, 6], 4],
+                      [[6, 7], 5], [[6, 9], 7], [[7, 1], 3], [[7, 7], 7],
+                      [[7, 9], 2], [[8, 5], 9], [[9, 3], 2], [[9, 4], 5],
+                      [[9, 5], 6], [[9, 9], 1] ];
+         evil.forEach(function (x) {
+           filled_in[x[0]] = x[1];
+         });
 
          for (var i = 1; i <= SIZE; i++) { domain.push(i); }
          function neq(x, y) { return x != y; }
