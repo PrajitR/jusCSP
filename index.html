@@ -233,14 +233,15 @@ csp.solve(board);
       </pre>
 
       <h3> Sudoku </h3>
-      <p>The board on the left is the starting board. 
-      The board on the right is getting solved.
+      <p>The board on the left/top is the starting board. 
+      The board on the right/bottom is getting solved.
       </p>
       <button id="sudoku-button">Solve Sudoku</button>
       <br/>
       <span id="sudoku-start" style="float: left; font-family: Consolas, monospace;"></span>
       <span id="sudoku" style="float: left; font-family: Consolas, monospace;"></span>
-      <pre>
+      <br/>
+      <pre style="clear: both;">
 var  SIZE = 9, BLOCK_SIZE = Math.sqrt(SIZE) | 0, domain = [],
      sudoku = {}, variables = {}, constraints = [],
      filled_in = {};
