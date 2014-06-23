@@ -14,6 +14,7 @@ CSP.solve = function solve(csp) {
   //          an "assigned" object, an "unassigned" object, and `csp`.
   //    `timeStep`: milliseconds between invocations of `cb`.
 
+  stepCounter = 0;
   csp.timeStep = csp.timeStep || 1;
   var result = backtrack({}, csp.variables, csp);
   if (result == FAILURE) { return result; }
