@@ -1,7 +1,7 @@
 cspjs
 =====
 
-Visualize solving Constraint Satisfaction Problems. [Demonstration.](http://prajitr.github.io/cspjs/)
+Visualize solving Constraint Satisfaction Problems. [Demonstration.](http://prajitr.github.io/jusCSP/)
 
 Intro
 -----
